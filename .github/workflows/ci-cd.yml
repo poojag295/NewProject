@@ -1,7 +1,4 @@
-name: Spring Boot CI Pipeline
-
-on:
-  push:name: Spring Boot CI-CD Pipeline
+name: Spring Boot CI-CD Pipeline
 
 on:
   push:
@@ -18,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Set up JDK 17
+      # 2. Set up Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -34,47 +31,16 @@ jobs:
 
       # 4. Build project
       - name: Build with Maven
-        run: mvn clean install -DskipTests
+        run: mvn clean package -DskipTests
 
       # 5. Run tests
       - name: Run tests
         run: mvn test
 
-      # 6. Trigger Render Deployment
+      # 6. Build Docker image
+      - name: Build Docker image
+        run: docker build -t springboot-app .
+
+      # 7. Trigger Render deployment
       - name: Deploy to Render
-        run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-jobs:
-  build-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      # 1. Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. Set up Java
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      # 3. Cache Maven dependencies
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-
-      # 4. Build project
-      - name: Build with Maven
-        run: mvn clean install
-
-      # 5. Run tests
-      - name: Run tests
-        run: mvn test
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
